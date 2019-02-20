@@ -23,10 +23,10 @@ public class DiamondSquare : MonoBehaviour {
 
     public void Export(string targetDirectory)
     {
-        Texture2D texture = new Texture2D(resolution, resolution);
-        for (int y = 0; y < resolution; y++)
+        Texture2D texture = new Texture2D(resolution + 1, resolution + 1);
+        for (int y = 0; y < resolution + 1; y++)
         {
-            for(int x = 0; x < resolution; x++)
+            for(int x = 0; x < resolution + 1; x++)
             {
                 float greyValue = heightmap.Get(x, y);
                 if(greyValue == 0)
@@ -39,12 +39,16 @@ public class DiamondSquare : MonoBehaviour {
         texture.Apply();
 
         var path =  System.IO.Path.Combine(targetDirectory, "Heightmap.png");
-
+        var rawPath = System.IO.Path.Combine(targetDirectory, "Heightmap.raw");
+        byte[] raw = texture.GetRawTextureData();
         byte[] file = texture.EncodeToPNG();
         if (System.IO.File.Exists(path))
             System.IO.File.Delete(path);
         System.IO.FileStream fs = new System.IO.FileStream(path, System.IO.FileMode.CreateNew);
         fs.Write(file, 0, file.Length);
+        fs.Close();
+        fs = new System.IO.FileStream(rawPath, System.IO.FileMode.CreateNew);
+        fs.Write(raw, 0, raw.Length);
         fs.Close();
     }
 
@@ -78,19 +82,19 @@ class HeightMap
     public void DiamondSquare()
     {
         Init();
-        int iteration = resolution / 2;
+        int iteration = resolution - 1;
         int level = 1;
-        while (iteration != 0)
+        while (iteration > 1)
         {
-            for (int y = 0; y < level; y++)
+            for (int y = 0; y < resolution - 1; y+=iteration)
             {
-                for (int x = 0; x < level; x++)
+                for (int x = 0; x < resolution - 1; x+=iteration)
                 {
-                    int cell_corner_x = iteration * x;
-                    int cell_corner_y = iteration * y;
+                    int cell_corner_x = x;
+                    int cell_corner_y = y;
 
-                    DiamondStep(cell_corner_x, cell_corner_y, iteration, roughness);
-                    SquareStep(cell_corner_x, cell_corner_y, iteration, roughness);
+                    DiamondStep(cell_corner_x, cell_corner_y, iteration/2, roughness);
+                    SquareStep(cell_corner_x, cell_corner_y, iteration/2, roughness);
                 }
             }
             iteration /= 2;
